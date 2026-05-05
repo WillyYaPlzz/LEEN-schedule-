@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leen's Weekly Schedule</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fff1f7, #eef4ff);
+      color: #3b3b4f;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: clamp(1.9rem, 5vw, 2.7rem);
+      color: #7b5cff;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #777;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(123, 92, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      margin-bottom: 28px;
+    }
+
+    .form-title {
+      margin-bottom: 16px;
+      color: #ff78ac;
+      font-size: 1.3rem;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #ddd7ff;
+      outline: none;
+      background: #fff;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #9d86ff;
+      box-shadow: 0 0 0 3px rgba(157, 134, 255, 0.15);
+    }
+
+    .days-picker {
+      grid-column: span 2;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid #ddd7ff;
+      border-radius: 14px;
+      padding: 10px;
+      min-height: 45px;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff8fb;
+      border: 1px solid #f1d7e5;
+      border-radius: 999px;
+      padding: 8px 11px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #5b5570;
+    }
+
+    .checkbox-group input {
+      width: auto;
+      accent-color: #ff78ac;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .add-btn {
+      background: linear-gradient(135deg, #ff78ac, #8b75ff);
+      color: white;
+      min-height: 48px;
+    }
+
+    .add-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(139, 117, 255, 0.25);
+    }
+
+    .schedule-wrapper {
+      overflow-x: auto;
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: 26px;
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(123, 92, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .schedule-grid {
+      min-width: 950px;
+      display: grid;
+      grid-template-columns: 90px repeat(5, 1fr);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #eadfff;
+      background: white;
+    }
+
+    .corner-cell,
+    .day-header,
+    .time-cell,
+    .slot {
+      border-right: 1px solid #eee5ff;
+      border-bottom: 1px solid #eee5ff;
+    }
+
+    .corner-cell,
+    .day-header {
+      background: linear-gradient(135deg, #ffe6f1, #eee9ff);
+      min-height: 58px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      color: #7b5cff;
+      position: sticky;
+      top: 0;
+      z-index: 4;
+    }
+
+    .corner-cell {
+      left: 0;
+      z-index: 5;
+    }
+
+    .time-cell {
+      background: #fff8fb;
+      min-height: 96px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ff78ac;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+    }
+
+    .slot {
+      min-height: 96px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: 0.18s ease;
+    }
+
+    .slot:hover,
+    .slot.drag-over {
+      background: #f7f3ff;
+      box-shadow: inset 0 0 0 2px #c9bbff;
+    }
+
+    .class-card {
+      background: linear-gradient(135deg, #fff8fb, #f5f2ff);
+      border-radius: 16px;
+      padding: 12px;
+      border-left: 5px solid #ff78ac;
+      box-shadow: 0 8px 18px rgba(80, 70, 120, 0.1);
+      cursor: grab;
+      user-select: none;
+      margin-bottom: 8px;
+    }
+
+    .class-card:active {
+      cursor: grabbing;
+    }
+
+    .class-card.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+
+    .class-card strong {
+      display: block;
+      font-size: 0.95rem;
+      color: #3f3a60;
+      margin-bottom: 6px;
+    }
+
+    .class-card span {
+      display: block;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .mobile-move {
+      display: none;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .mobile-move select {
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+    }
+
+    .move-btn,
+    .delete-btn {
+      margin-top: 8px;
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      width: 100%;
+    }
+
+    .move-btn {
+      background: #ece7ff;
+      color: #6b55e7;
+    }
+
+    .move-btn:hover {
+      background: #ded6ff;
+    }
+
+    .delete-btn {
+      background: #ffe3ef;
+      color: #d63370;
+    }
+
+    .delete-btn:hover {
+      background: #ffd1e3;
+    }
+
+    .hint {
+      color: #777;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1100px) {
+      body {
+        padding: 22px;
+      }
+
+      form {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .days-picker {
+        grid-column: span 3;
+      }
+
+      .schedule-grid {
+        min-width: 880px;
+        grid-template-columns: 82px repeat(5, 1fr);
+      }
+    }
+
+    @media (max-width: 800px) {
+      body {
+        padding: 18px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      form {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .days-picker {
+        grid-column: span 2;
+      }
+
+      .schedule-wrapper {
+        padding: 12px;
+        border-radius: 22px;
+      }
+
+      .schedule-grid {
+        min-width: 760px;
+        grid-template-columns: 76px repeat(5, 136px);
+      }
+
+      .corner-cell,
+      .day-header {
+        min-height: 52px;
+        font-size: 0.85rem;
+      }
+
+      .time-cell,
+      .slot {
+        min-height: 110px;
+      }
+
+      .mobile-move {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 14px;
+      }
+
+      header {
+        margin-bottom: 20px;
+      }
+
+      header p {
+        font-size: 0.9rem;
+      }
+
+      form {
+        grid-template-columns: 1fr;
+      }
+
+      .days-picker {
+        grid-column: span 1;
+      }
+
+      .checkbox-group label {
+        flex: 1 1 45%;
+        justify-content: center;
+      }
+
+      .add-btn {
+        width: 100%;
+      }
+
+      .schedule-wrapper::before {
+        content: "Swipe left/right to see all days";
+        display: block;
+        color: #8b75ff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .schedule-grid {
+        min-width: 720px;
+        grid-template-columns: 72px repeat(5, 130px);
+      }
+
+      .class-card {
+        padding: 10px;
+      }
+
+      .class-card strong {
+        font-size: 0.88rem;
+      }
+
+      .class-card span {
+        font-size: 0.76rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Leen's Weekly Schedule ✨</h1>
+      <p>Sunday to Thursday class planner</p>
+    </header>
+
+    <section class="card">
+      <h3 class="form-title">Add a class</h3>
+      <form id="classForm">
+        <div class="days-picker">
+          <label>Days</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="days" value="Sunday" /> Sun</label>
+            <label><input type="checkbox" name="days" value="Monday" /> Mon</label>
+            <label><input type="checkbox" name="days" value="Tuesday" /> Tue</label>
+            <label><input type="checkbox" name="days" value="Wednesday" /> Wed</label>
+            <label><input type="checkbox" name="days" value="Thursday" /> Thu</label>
+          </div>
+        </div>
+
+        <div>
+          <label for="course">Class</label>
+          <input id="course" type="text" placeholder="e.g. Math" required />
+        </div>
+
+        <div>
+          <label for="hour">Hour</label>
+          <select id="hour" required></select>
+        </div>
+
+        <div>
+          <label for="section">Section</label>
+          <input id="section" type="text" placeholder="e.g. 203" required />
+        </div>
+
+        <div>
+          <label for="instructor">Instructor</label>
+          <input id="instructor" type="text" placeholder="e.g. Dr. Sara" required />
+        </div>
+
+        <button class="add-btn" type="submit">Add</button>
+      </form>
+      <p class="hint">Desktop: drag a class to another day or hour. Mobile/iPad: use the move dropdowns inside each class card. Everything saves automatically.</p>
+    </section>
+
+    <section class="schedule-wrapper">
+      <div class="schedule-grid" id="schedule"></div>
+    </section>
+  </div>
+
+  <script>
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+    const hours = [
+      "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+      "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
+    ];
+
+    const form = document.getElementById("classForm");
+    const schedule = document.getElementById("schedule");
+    const hourSelect = document.getElementById("hour");
+
+    let classes = JSON.parse(localStorage.getItem("leenSchedule")) || [];
+    let draggedClassId = null;
+
+    function fillHourOptions() {
+      hourSelect.innerHTML = "";
+
+      hours.forEach(hour => {
+        const option = document.createElement("option");
+        option.value = hour;
+        option.textContent = hour;
+        hourSelect.appendChild(option);
+      });
+    }
+
+    function dayOptions(selectedDay) {
+      return days
+        .map(day => `<option value="${day}" ${day === selectedDay ? "selected" : ""}>${day}</option>`)
+        .join("");
+    }
+
+    function hourOptions(selectedHour) {
+      return hours
+        .map(hour => `<option value="${hour}" ${hour === selectedHour ? "selected" : ""}>${hour}</option>`)
+        .join("");
+    }
+
+    function saveClasses() {
+      localStorage.setItem("leenSchedule", JSON.stringify(classes));
+    }
+
+    function renderSchedule() {
+      schedule.innerHTML = "";
+
+      const cornerCell = document.createElement("div");
+      cornerCell.className = "corner-cell";
+      cornerCell.textContent = "Time";
+      schedule.appendChild(cornerCell);
+
+      days.forEach(day => {
+        const dayHeader = document.createElement("div");
+        dayHeader.className = "day-header";
+        dayHeader.textContent = day;
+        schedule.appendChild(dayHeader);
+      });
+
+      hours.forEach(hour => {
+        const timeCell = document.createElement("div");
+        timeCell.className = "time-cell";
+        timeCell.textContent = hour;
+        schedule.appendChild(timeCell);
+
+        days.forEach(day => {
+          const slot = document.createElement("div");
+          slot.className = "slot";
+          slot.dataset.day = day;
+          slot.dataset.hour = hour;
+
+          slot.addEventListener("dragover", handleDragOver);
+          slot.addEventListener("dragleave", handleDragLeave);
+          slot.addEventListener("drop", handleDrop);
+
+          const slotClasses = classes.filter(item => item.day === day && item.hour === hour);
+
+          slotClasses.forEach(item => {
+            const classCard = document.createElement("div");
+            classCard.className = "class-card";
+            classCard.draggable = true;
+            classCard.dataset.id = item.id;
+
+            classCard.innerHTML = `
+              <strong>${item.course}</strong>
+              <span>⏰ ${item.hour}</span>
+              <span>📌 Section: ${item.section}</span>
+              <span>👩‍🏫 Instructor: ${item.instructor}</span>
+
+              <div class="mobile-move">
+                <select id="moveDay-${item.id}">${dayOptions(item.day)}</select>
+                <select id="moveHour-${item.id}">${hourOptions(item.hour)}</select>
+              </div>
+
+              <button class="move-btn" onclick="moveClass(${item.id})">Move</button>
+              <button class="delete-btn" onclick="deleteClass(${item.id})">Delete</button>
+            `;
+
+            classCard.addEventListener("dragstart", handleDragStart);
+            classCard.addEventListener("dragend", handleDragEnd);
+
+            slot.appendChild(classCard);
+          });
+
+          schedule.appendChild(slot);
+        });
+      });
+    }
+
+    function handleDragStart(event) {
+      if (event.target.tagName === "BUTTON" || event.target.tagName === "SELECT") return;
+
+      draggedClassId = Number(event.currentTarget.dataset.id);
+      event.currentTarget.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggedClassId);
+    }
+
+    function handleDragEnd(event) {
+      event.currentTarget.classList.remove("dragging");
+      draggedClassId = null;
+      document.querySelectorAll(".slot").forEach(slot => slot.classList.remove("drag-over"));
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add("drag-over");
+    }
+
+    function handleDragLeave(event) {
+      event.currentTarget.classList.remove("drag-over");
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+
+      const id = draggedClassId || Number(event.dataTransfer.getData("text/plain"));
+      const newDay = event.currentTarget.dataset.day;
+      const newHour = event.currentTarget.dataset.hour;
+
+      classes = classes.map(item => {
+        if (item.id === id) {
+          return { ...item, day: newDay, hour: newHour };
+        }
+        return item;
+      });
+
+      saveClasses();
+      renderSchedule();
+    }
+
+    function moveClass(id) {
+      const newDay = document.getElementById(`moveDay-${id}`).value;
+      const newHour = document.getElementById(`moveHour-${id}`).value;
+
+      classes = classes.map(item => {
+        if (item.id === id) {
+          return { ...item, day: newDay, hour: newHour };
+        }
+        return item;
+      });
+
+      saveClasses();
+      renderSchedule();
+    }
+
+    function deleteClass(id) {
+      classes = classes.filter(item => item.id !== id);
+      saveClasses();
+      renderSchedule();
+    }
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const selectedDays = Array.from(document.querySelectorAll('input[name="days"]:checked')).map(day => day.value);
+
+      if (selectedDays.length === 0) {
+        alert("Please choose at least one day.");
+        return;
+      }
+
+      selectedDays.forEach(day => {
+        const newClass = {
+          id: Date.now() + Math.random(),
+          day: day,
+          course: document.getElementById("course").value.trim(),
+          hour: document.getElementById("hour").value,
+          section: document.getElementById("section").value.trim(),
+          instructor: document.getElementById("instructor").value.trim()
+        };
+
+        classes.push(newClass);
+      });
+
+      saveClasses();
+      renderSchedule();
+      form.reset();
+    });
+
+    fillHourOptions();
+    renderSchedule();
+  </script>
+</body>
+</html>
